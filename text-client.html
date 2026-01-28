@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Distributed Judge Test</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .box { border: 1px solid #ccc; padding: 10px; margin-top: 10px; width: 300px;}
+        #status { font-weight: bold; color: blue; }
+        pre { background: #f4f4f4; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>Code Submission Test</h2>
+    <div class="box">
+        <label>User ID:</label>
+        <input type="text" id="userId" value="student_01">
+        <br><br>
+        <button onclick="connect()">1. Connect to Server</button>
+    </div>
+
+    <div class="box">
+        <textarea id="code" rows="4" cols="30">print("Hello from Real-Time!")</textarea>
+        <br>
+        <button onclick="submitCode()">2. Submit Code</button>
+    </div>
+
+    <h3>Live Result:</h3>
+    <div id="result">Waiting...</div>
+
+    <script>
+        const API_URL = "http://localhost:3000";
+        let socket;
+
+        function connect() {
+            const userId = document.getElementById('userId').value;
+            
+            // Connect to Socket.io
+            socket = io(API_URL);
+            
+            // Join the room for this specific user
+            socket.emit('join_user', userId);
+            
+            // LISTEN for results
+            socket.on('submission_result', (data) => {
+                document.getElementById('result').innerHTML = `
+                    <p>Status: <span id="status">${data.status}</span></p>
+                    <p>Time: ${data.time}s</p>
+                    <pre>${data.stdout || data.error}</pre>
+                `;
+            });
+
+            alert("Connected as " + userId);
+        }
+
+        async function submitCode() {
+            const userId = document.getElementById('userId').value;
+            const code = document.getElementById('code').value;
+
+            document.getElementById('result').innerText = "Processing... (Look at me update!)";
+
+            // Send standard HTTP POST
+            await fetch(API_URL + '/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: userId,
+                    source_code: code,
+                    language_id: 71,
+                    problem_id: 1
+                })
+            });
+        }
+    </script>
+</body>
+</html>
