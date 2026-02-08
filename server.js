@@ -41,7 +41,7 @@ io.on('connection', (socket) => {
 // -----------------------
 
 app.post('/submit', async (req, res) => {
-    const { user_id, source_code, language_id } = req.body;
+    const { user_id, source_code, language_id, problem_id, stdin } = req.body;
     try {
         const result = await db.query(
             "INSERT INTO submissions (user_id, source_code, language_id, status) VALUES ($1, $2, $3, 'PENDING') RETURNING id",
@@ -49,7 +49,7 @@ app.post('/submit', async (req, res) => {
         );
         const submissionId = result.rows[0].id;
 
-        await submissionQueue.add('execute-job', { submissionId, source_code, language_id, user_id });
+        await submissionQueue.add('execute-job', { submissionId, source_code, language_id, user_id,stdin: stdin || ""  });
 
         res.json({ status: 'queued', submission_id: submissionId });
     } catch (err) {
@@ -59,4 +59,4 @@ app.post('/submit', async (req, res) => {
 });
 
 // CHANGE: app.listen -> server.listen
-server.listen(3000, () => console.log('🚀 API + Socket Hub running on port 3000'));
+server.listen(3100, () => console.log('🚀 API + Socket Hub running on port 3000'));
